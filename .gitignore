@@ -1,2 +1,5 @@
 *.exe
 *.dll
+*.o
+*.class
+.gitignore
