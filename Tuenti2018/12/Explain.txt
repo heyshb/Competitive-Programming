@@ -1,0 +1,4 @@
+1. Using USB/IP to connect to the server
+2. For task1, using another editor to show hidden insturcion
+3. Do what I asked to do
+4. Get the password

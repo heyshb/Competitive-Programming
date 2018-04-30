@@ -3,3 +3,8 @@
 *.o
 *.class
 .gitignore
+*.cgb
+*.ini
+*.in
+*.png
+*.out
