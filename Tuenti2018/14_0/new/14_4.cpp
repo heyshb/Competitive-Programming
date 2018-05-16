@@ -49,7 +49,6 @@ struct Edge
 	Edge() : tri(0), side(0) {}
 	Edge(TriangleRef tri, SideRef side) : tri(tri), side(side) {}
 };
-int totgraphnum = 0; 
 struct Triangle 
 {
 	Point p[3]; 
@@ -59,7 +58,6 @@ struct Triangle
 	Triangle(){}
 	Triangle(Point const& p0, Point const& p1, Point const& p2) 
 	{
-		graphnum = ++totgraphnum;
 		p[0]=p0;p[1]=p1;p[2]=p2;children[0]=children[1]=children[2]=0;
 	}
 	bool has_children() const { return children[0] != 0; }
@@ -157,19 +155,6 @@ ft Quo()
 	return ft(1.0) * v1 / v2; 
 }
 vector<pair<int,ft> >e[100010];
-vector<pair<Point,Point> >oute;
-void addedge(Point p1,Point p2)
-{
-	if (fabs(p1.x) > LOTS / 3 || fabs(p2.x) > LOTS / 3 || fabs(p1.y) > LOTS / 3 || fabs(p2.y) > LOTS / 3) return;
-	oute.push_back(make_pair(p1,p2));
-	int num1 = getnum(p1);
-	int num2 = getnum(p2);
-	ft len = sqrt(dist_sqr(p1,p2));
-	e[num1].push_back(make_pair(num2,len));
-	e[num2].push_back(make_pair(num1,len));
-	//printf("add %d %d %.3lf\n",num1,num2,len);
-}
-bool debug = false;
 bool between(Point P,Point PL,Point PR)
 {
 	ft x1 = P.x - PL.x, x2 = P.x - PR.x;
@@ -182,9 +167,9 @@ bool between(Point P,Point PL,Point PR)
 
 int _=0;
 int from[100010];
-double eps2 = 1e-8;
 ft d[100010];
 bool inq[100010];
+
 void solve()
 {
 	num.clear();
@@ -235,11 +220,12 @@ void solve()
 	}
 	tt = tri.find(st);
 	cc = tt->Circumcenter();
-	//printf("fuck Niconiconi~!\n");
+	printf("fuck Niconiconi~!\n");
 	//printf("%.3d %.3d\n",st.x,st.y);
 	//for (int i=0;i<3;i++)printf("(%.3lf %.3lf)\n",tt->p[i].x,tt->p[i].y);
 	//for (int i=0;i<3;i++)printf("(%.3d %.3lf)\n",cc.x,cc.y);
 	addedge(st,cc);
+	debug = true;
 	for (int i=0;i<3;i++)
 	if (dist_sqr(tt->p[i],tt->p[(i+1)%3]) > 4 * R * R - 1e-8)
 	{
@@ -252,6 +238,7 @@ void solve()
 			addedge(midp,st);
 		}
 	}
+	debug = false;
 	
 	tt = tri.find(ed);
 	cc = tt->Circumcenter();
@@ -263,16 +250,6 @@ void solve()
 		midp.y = (tt->p[i].y + tt->p[(i+1)%3].y) / 2;
 		if (between(ed,midp,cc)) addedge(midp,ed);
 	}
-	/*
-	printf("%d\n",oute.size());
-	puts("-----");
-	for (auto t:oute)
-	{
-		printf("%.3lf %.3lf\n",t.first.x,t.first.y);
-		printf("%.3lf %.3lf\n",t.second.x,t.second.y);
-	}
-	puts("-----");*/
-	//for (auto pp:num)printf("%.3lf %.3lf %d\n",pp.first.x,pp.first.y,pp.second);
 	int ST = getnum(st), ED = getnum(ed);
 	queue<int>q;
 	for (int i=1;i<=maxnum;i++)d[i] = INF,inq[i] = false;
@@ -302,7 +279,7 @@ void solve()
 	{
 		for (int i=ED;;i=from[i])
 		{
-			//printf("!!!! %d (%.3lf %.3lf)\n",i,numP[i].x,numP[i].y);
+			printf("!!!! %d (%.3lf %.3lf)\n",i,numP[i].x,numP[i].y);
 			if (i == ST) break;
 		}
 		printf("%.3lf\n",double(d[ED]));
@@ -316,8 +293,7 @@ int main()
 	//freopen("14_final_test.out","w",stdout);
 	//freopen("14_test8.in","r",stdin);
 	//freopen("14_test8.out","w",stdout);
-	//freopen("14_submit.in","r",stdin);
-	//freopen("14_submit.out","w",stdout);
+	freopen("sample.in","r",stdin);
 	int T;scanf("%d",&T);
 	while(T--) 
 	solve();

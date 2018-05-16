@@ -174,9 +174,9 @@ bool between(Point P,Point PL,Point PR)
 {
 	ft x1 = P.x - PL.x, x2 = P.x - PR.x;
 	ft y1 = P.y - PL.y, y2 = P.y - PR.y;
-	//printf("between: %.8lf %.8lf\n",x1 * y2 - y1 * x2,x1 * x2 + y1 * y2);
+	printf("between: %.8lf %.8lf\n",x1 * y2 - y1 * x2,x1 * x2 + y1 * y2);
 	if (fabs(x1 * y2 - y1 * x2) > 1e-8) return false;
-	//puts("here");
+	puts("here");
 	return (x1 * x2 + y1 * y2 < 1e-8);
 }
 
@@ -221,10 +221,10 @@ void solve()
 	for (tt = triangle_pool;tt != tot_triangles;tt++)
 	if (!tt->has_children())
 	{
-		//puts("triangle!");
+		puts("triangle!");
 		cc = tt->Circumcenter();
-		//for (int i=0;i<3;i++)printf("%.3lf %.3lf\n",tt->p[i].x,tt->p[i].y);
-		//printf("CC: %.3lf %.3lf\n",cc.x,cc.y);
+		for (int i=0;i<3;i++)printf("%.3lf %.3lf\n",tt->p[i].x,tt->p[i].y);
+		printf("CC: %.3lf %.3lf\n",cc.x,cc.y);
 		for (int i=0;i<3;i++)
 		if (dist_sqr(tt->p[i],tt->p[(i+1)%3]) > 4 * R * R - 1e-8)
 		{
@@ -235,11 +235,12 @@ void solve()
 	}
 	tt = tri.find(st);
 	cc = tt->Circumcenter();
-	//printf("fuck Niconiconi~!\n");
+	printf("fuck Niconiconi~!\n");
 	//printf("%.3d %.3d\n",st.x,st.y);
 	//for (int i=0;i<3;i++)printf("(%.3lf %.3lf)\n",tt->p[i].x,tt->p[i].y);
 	//for (int i=0;i<3;i++)printf("(%.3d %.3lf)\n",cc.x,cc.y);
 	addedge(st,cc);
+	debug = true;
 	for (int i=0;i<3;i++)
 	if (dist_sqr(tt->p[i],tt->p[(i+1)%3]) > 4 * R * R - 1e-8)
 	{
@@ -252,6 +253,7 @@ void solve()
 			addedge(midp,st);
 		}
 	}
+	debug = false;
 	
 	tt = tri.find(ed);
 	cc = tt->Circumcenter();
@@ -316,8 +318,8 @@ int main()
 	//freopen("14_final_test.out","w",stdout);
 	//freopen("14_test8.in","r",stdin);
 	//freopen("14_test8.out","w",stdout);
-	//freopen("14_submit.in","r",stdin);
-	//freopen("14_submit.out","w",stdout);
+	freopen("14_submit.in","r",stdin);
+	freopen("14_submit.out","w",stdout);
 	int T;scanf("%d",&T);
 	while(T--) 
 	solve();

@@ -4,11 +4,10 @@ const int N = 100000 + 5, MAX_TRIS = N * 6;
 typedef double ft;
 typedef long long LL;
 const ft EPSILON = 1e-6;
-const ft INF = 1e17;
+const ft INF = 1e16;
 struct Point {
 ft x,y; Point():x(0),y(0){} Point(ft x, ft y):x(x),y(y){}
 bool operator ==(Point const& that)const {return x==that.x&&y==that.y;}
-bool operator < (Point const& that)const {return x<that.x || (x==that.x && y<that.y);}
 };
 inline ft sqr(ft x) { return x*x; }
 ft dist_sqr(Point const& a, Point const& b){return sqr(a.x-b.x)+sqr(a.y-b.y);}
@@ -29,19 +28,6 @@ ft side(Point const& a, Point const& b, Point const& p)
 typedef int SideRef; 
 struct Triangle; 
 typedef Triangle* TriangleRef;
-map<Point,int>num;
-int maxnum = 0;
-Point numP[100010];
-int getnum(Point P)
-{
-	if (num.find(P) != num.end())
-	{
-		return num[P];
-	}
-	num[P] = ++maxnum;
-	numP[maxnum] = P;
-	return maxnum;
-}
 struct Edge 
 {
 	TriangleRef tri; 
@@ -49,7 +35,7 @@ struct Edge
 	Edge() : tri(0), side(0) {}
 	Edge(TriangleRef tri, SideRef side) : tri(tri), side(side) {}
 };
-int totgraphnum = 0; 
+int totgraphnum;
 struct Triangle 
 {
 	Point p[3]; 
@@ -97,7 +83,7 @@ void set_edge(Edge a, Edge b)
 	if (a.tri) a.tri->edge[a.side] = b;
 	if (b.tri) b.tri->edge[b.side] = a;
 }
-const ft LOTS = 1e6;
+const ft LOTS = 1e12;
 class Triangulation {
 public:
 	Triangulation() 
@@ -110,9 +96,14 @@ private:
 	TriangleRef the_root;
 	static TriangleRef find(TriangleRef root, Point const& p) 
 	{
+		puts("finding");
 		for( ; ; ) 
 		{
-			if (!root->has_children()) return root;
+			if (!root->has_children()) 
+			{
+				puts("hah");
+				return root;
+			}
 			else for (int i = 0; i < 3 && root->children[i] ;++i)
 			if (root->children[i]->contains(p))
 			{
@@ -123,6 +114,7 @@ private:
 	}
 	void add_point(TriangleRef root, Point const& p) 
 	{
+		printf("add %.3lf %.3lf\n",p.x,p.y);
 		TriangleRef tab,tbc,tca;
 		tab = new(tot_triangles++) Triangle(root->p[0], root->p[1], p);
 		tbc = new(tot_triangles++) Triangle(root->p[1], root->p[2], p);
@@ -135,6 +127,7 @@ private:
 	}
 	void flip(TriangleRef tri, SideRef pi) 
 	{
+		puts("CNMB");
 		TriangleRef trj = tri->edge[pi].tri; int pj = tri->edge[pi].side;
 		if(!trj||!in_circumcircle(tri->p[0],tri->p[1],tri->p[2],trj->p[pj])) return;
 		TriangleRef trk = new(tot_triangles++) Triangle(tri->p[(pi+1)%3], trj->p[pj], tri->p[pi]);
@@ -157,21 +150,24 @@ ft Quo()
 	return ft(1.0) * v1 / v2; 
 }
 vector<pair<int,ft> >e[100010];
+Point numP[100010];
 vector<pair<Point,Point> >oute;
-void addedge(Point p1,Point p2)
+void addedge(int v1,int v2)
 {
-	if (fabs(p1.x) > LOTS / 3 || fabs(p2.x) > LOTS / 3 || fabs(p1.y) > LOTS / 3 || fabs(p2.y) > LOTS / 3) return;
+	Point p1 = numP[v1];
+	Point p2 = numP[v2];
+	if (fabs(p1.x) > LOTS / 10 || fabs(p2.x) > LOTS / 10 || fabs(p1.y) > LOTS / 10 || fabs(p2.y) > LOTS / 10) return;
+	printf("add (%.3lf %.3lf) -- (%.3lf %.3lf)\n",p1.x,p1.y,p2.x,p2.y); 
 	oute.push_back(make_pair(p1,p2));
-	int num1 = getnum(p1);
-	int num2 = getnum(p2);
 	ft len = sqrt(dist_sqr(p1,p2));
-	e[num1].push_back(make_pair(num2,len));
-	e[num2].push_back(make_pair(num1,len));
+	e[v1].push_back(make_pair(v2,len));
+	e[v2].push_back(make_pair(v1,len));
 	//printf("add %d %d %.3lf\n",num1,num2,len);
 }
 bool debug = false;
 bool between(Point P,Point PL,Point PR)
 {
+	if (dist_sqr(P,PL) < 1e-6 || dist_sqr(P,PR) < 1e-6) return true;
 	ft x1 = P.x - PL.x, x2 = P.x - PR.x;
 	ft y1 = P.y - PL.y, y2 = P.y - PR.y;
 	//printf("between: %.8lf %.8lf\n",x1 * y2 - y1 * x2,x1 * x2 + y1 * y2);
@@ -185,84 +181,126 @@ int from[100010];
 double eps2 = 1e-8;
 ft d[100010];
 bool inq[100010];
+
+double eps_ok = 1e-8;
+bool ok(Point P1,Point P2,Point P3,Point P4)
+{
+	return (dist_sqr(P1,P3) < eps_ok && dist_sqr(P2,P4) < eps_ok) || (dist_sqr(P1,P4) < eps_ok && dist_sqr(P2,P3) < eps_ok);
+}
+
+void printtri(Triangle t)
+{
+	for (int i=0;i<3;i++)
+		printf("%.3lf %.3lf\n",t.p[i].x,t.p[i].y);
+	auto cc = t.Circumcenter();
+	printf("%.3lf %.3lf\n",cc.x,cc.y);
+}
+
 void solve()
 {
-	num.clear();
-	maxnum = 0;
-	tot_triangles = triangle_pool; cin>>n;
+	srand(time(0));
+	totgraphnum = 0;
+	tot_triangles = triangle_pool; scanf("%d",&n);
 	for (int i = 0; i < n; ++ i) 
 	{
 		double tx,ty;
 		scanf("%lf%lf",&tx,&ty);
+		tx += 1.0 * rand() / 1e8;
+		ty += 1.0 * rand() / 1e8;
 		ps[i].x = tx;
 		ps[i].y = ty;
 	}
 	random_shuffle(ps, ps + n); Triangulation tri;
 	for (int i = 0; i < n; ++ i) tri.add_point(ps[i]);
+	 
+	Triangle *t;
+	for (t=triangle_pool;t != tot_triangles;t++)
+	if (!t->has_children())
+	{
+		puts("wow");
+		printtri(*t);
+	}
 	
 	Point st,ed;
 	ft R = Quo();
 	st.x = Quo();st.y = Quo();
 	ed.x = Quo();ed.y = Quo();
 	//printf("%.3lf %.3lf %.3lf %.3lf %.3lf\n",R,st.x,st.y,ed.x,ed.y);
-	printf("Case #%d: ",++_);
 	//printf("N = %d\n",n);
 	for (int i=0;i<n;i++)
 	{
 		if (dist_sqr(st,ps[i]) < sqr(R) - eps2 || dist_sqr(ed,ps[i]) < sqr(R) - eps2)
 		{
-			for (int i=1;i<=maxnum;i++)e[i].clear();
+			for (int i=1;i<=totgraphnum;i++)e[i].clear();
+			printf("Case #%d: ",++_);
 			puts("IMPOSSIBLE");
 			return;
 		}  
 	}
-	Triangle *tt;
-	Point cc,midp;
-	for (tt = triangle_pool;tt != tot_triangles;tt++)
-	if (!tt->has_children())
+	Triangle *tt1,*tt2;
+	Point cc1,cc2;
+	for (tt1 = triangle_pool;tt1 != tot_triangles;tt1++)
 	{
-		//puts("triangle!");
-		cc = tt->Circumcenter();
-		//for (int i=0;i<3;i++)printf("%.3lf %.3lf\n",tt->p[i].x,tt->p[i].y);
-		//printf("CC: %.3lf %.3lf\n",cc.x,cc.y);
-		for (int i=0;i<3;i++)
-		if (dist_sqr(tt->p[i],tt->p[(i+1)%3]) > 4 * R * R - 1e-8)
+		numP[tt1->graphnum] = tt1->Circumcenter();
+	}
+	int ST = ++totgraphnum;
+	int ED = ++totgraphnum;
+	numP[ST] = st;
+	numP[ED] = ed;
+	for (tt1 = triangle_pool;tt1 != tot_triangles;tt1++)
+		for (tt2 = tt1;tt2 != tot_triangles;tt2++)
+		if (tt1 != tt2 && (!tt1->has_children()) && (!tt2->has_children()))
 		{
-			midp.x = (tt->p[i].x + tt->p[(i+1)%3].x) / 2;
-			midp.y = (tt->p[i].y + tt->p[(i+1)%3].y) / 2;
-			addedge(midp,cc);
+			int v1 = tt1->graphnum;
+			int v2 = tt2->graphnum;
+			cc1 = numP[v1];
+			cc2 = numP[v2];
+			puts("????"); 
+			for (int i=0;i<3;i++)
+				for (int j=0;j<3;j++)
+				if (ok(tt1->p[i],tt1->p[(i+1)%3],tt2->p[j],tt2->p[(j+1)%3]))
+				{
+					puts("fuck");
+					printtri(*tt1);printtri(*tt2); 
+					if (dist_sqr(tt1->p[i],tt1->p[(i+1)%3]) > 4 * R * R - 1e-8)
+					{
+						printf("add!! %d %d",v1,v2);
+						addedge(v1,v2);
+					}
+					if (between(st,cc1,cc2))
+					{
+						if (dist_sqr(tt1->p[i],tt1->p[(i+1)%3]) > 4 * R * R - 1e-8)
+						{
+							addedge(ST,v1);
+							addedge(ST,v2);
+						}
+						else
+						{
+							if (tri.find(st) == tri.find(numP[v1])) addedge(ST,v1);
+							if (tri.find(st) == tri.find(numP[v2])) addedge(ST,v2);
+						}
+					}
+					
+					if (between(ed,cc1,cc2))
+					{
+						if (dist_sqr(tt1->p[i],tt1->p[(i+1)%3]) > 4 * R * R - 1e-8)
+						{
+							addedge(ED,v1);
+							addedge(ED,v2);
+						}
+						else
+						{
+							if (tri.find(ed) == tri.find(numP[v1])) addedge(ED,v1);
+							if (tri.find(ed) == tri.find(numP[v2])) addedge(ED,v2);
+						}
+					}
+					
+					goto MAKI;
+				}
+			MAKI:
+				int Nico = 0;
+			puts("!!!!");
 		}
-	}
-	tt = tri.find(st);
-	cc = tt->Circumcenter();
-	//printf("fuck Niconiconi~!\n");
-	//printf("%.3d %.3d\n",st.x,st.y);
-	//for (int i=0;i<3;i++)printf("(%.3lf %.3lf)\n",tt->p[i].x,tt->p[i].y);
-	//for (int i=0;i<3;i++)printf("(%.3d %.3lf)\n",cc.x,cc.y);
-	addedge(st,cc);
-	for (int i=0;i<3;i++)
-	if (dist_sqr(tt->p[i],tt->p[(i+1)%3]) > 4 * R * R - 1e-8)
-	{
-		//puts("wow");
-		midp.x = (tt->p[i].x + tt->p[(i+1)%3].x) / 2;
-		midp.y = (tt->p[i].y + tt->p[(i+1)%3].y) / 2;
-		if (between(st,midp,cc)) 
-		{
-			//printf("add %.3lf %.3lf\n",midp.x,midp.y);
-			addedge(midp,st);
-		}
-	}
-	
-	tt = tri.find(ed);
-	cc = tt->Circumcenter();
-	addedge(ed,cc);
-	for (int i=0;i<3;i++)
-	if (dist_sqr(tt->p[i],tt->p[(i+1)%3]) > 4 * R * R - 1e-8)
-	{
-		midp.x = (tt->p[i].x + tt->p[(i+1)%3].x) / 2;
-		midp.y = (tt->p[i].y + tt->p[(i+1)%3].y) / 2;
-		if (between(ed,midp,cc)) addedge(midp,ed);
-	}
 	/*
 	printf("%d\n",oute.size());
 	puts("-----");
@@ -272,10 +310,10 @@ void solve()
 		printf("%.3lf %.3lf\n",t.second.x,t.second.y);
 	}
 	puts("-----");*/
-	//for (auto pp:num)printf("%.3lf %.3lf %d\n",pp.first.x,pp.first.y,pp.second);
-	int ST = getnum(st), ED = getnum(ed);
+	
+	puts("here");
 	queue<int>q;
-	for (int i=1;i<=maxnum;i++)d[i] = INF,inq[i] = false;
+	for (int i=1;i<=totgraphnum;i++)d[i] = INF,inq[i] = false;
 	d[ST] = 0;
 	q.push(ST);
 	inq[ST] = true;
@@ -296,18 +334,19 @@ void solve()
 		q.pop();
 		inq[now] = false;
 	}
+	printf("Case #%d: ",++_);
 	if (d[ED] == INF)
 		puts("IMPOSSIBLE");
 	else
 	{
 		for (int i=ED;;i=from[i])
 		{
-			//printf("!!!! %d (%.3lf %.3lf)\n",i,numP[i].x,numP[i].y);
+			printf("!!!! %d (%.3lf %.3lf)\n",i,numP[i].x,numP[i].y);
 			if (i == ST) break;
 		}
 		printf("%.3lf\n",double(d[ED]));
 	}
-	for (int i=1;i<=maxnum;i++)e[i].clear();
+	for (int i=1;i<=totgraphnum;i++)e[i].clear();
 }
 
 int main()
@@ -316,8 +355,8 @@ int main()
 	//freopen("14_final_test.out","w",stdout);
 	//freopen("14_test8.in","r",stdin);
 	//freopen("14_test8.out","w",stdout);
-	//freopen("14_submit.in","r",stdin);
-	//freopen("14_submit.out","w",stdout);
+	freopen("sample.in","r",stdin);
+	//freopen("sample.out","w",stdout);
 	int T;scanf("%d",&T);
 	while(T--) 
 	solve();
