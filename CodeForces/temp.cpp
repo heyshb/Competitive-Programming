@@ -6,5 +6,5 @@ typedef long long LL;
 typedef pair<int,int> pii;
 
 int main() {
-    
+    ios::sync_with_stdio(false);
 }
